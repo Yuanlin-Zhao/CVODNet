@@ -42,14 +42,14 @@ def make_parser():
     parser.add_argument(
         "-f",
         "--exp_file",
-        default=r'E:\zyl\crossvideodetection\YOLOV-mastercross\YOLOV-mastercross\exps\yolov++\v++_base_decoupleReg_Cross.py',
+        default=r'D:\githubzhang\CONDNet\YOLOV-mastercross\exps\CVODNet\cross_detection.py',
         type=str,
         help="plz input your expriment description file",
     )
     parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
-    parser.add_argument("-c", "--ckpt", default=r'E:\zyl\crossvideodetection\YOLOV-mastercross\YOLOV-mastercross\v++_s.pth', type=str, help="checkpoint file")
+    parser.add_argument("-c", "--ckpt", default=r'D:\aaaa-duomotai\YOLOV-master\v++_s.pth', type=str, help="checkpoint file")
 
     parser.add_argument(
         "-e",

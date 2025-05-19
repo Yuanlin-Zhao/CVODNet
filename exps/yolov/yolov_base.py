@@ -136,12 +136,12 @@ class Exp(BaseExp):
         # You can uncomment this line to specify a multiscale range
         # self.random_size = (14, 26)
         # dir of dataset images, if data_dir is None, this project will use `datasets` dir
-        self.data_dir = r''
+        self.data_dir = r'D:\aaaa-duomotai\YOLOV-master\datasets'
         # name of annotation file for training
-        self.ir_vid_train_path = r''
-        self.ir_vid_val_path = r''
-        self.vid_train_path = r''
-        self.vid_val_path = r''
+        self.ir_vid_train_path = r'D:\aaaa-duomotai\YOLOV-master\val_seq.npy'
+        self.ir_vid_val_path = r'D:\aaaa-duomotai\YOLOV-master\val_seq.npy'
+        self.vid_train_path = r'D:\aaaa-duomotai\YOLOV-master\val_seq.npy'
+        self.vid_val_path = r'D:\aaaa-duomotai\YOLOV-master\val_seq.npy'
         # path to vid name list
 
         # --------------- transform config ----------------- #
@@ -345,7 +345,7 @@ class Exp(BaseExp):
                                  local_stride=self.local_stride,
                                  )
 
-        #print(f'len(dataset)={len(dataset)}')
+        print(f'len(dataset)={len(dataset)}')
         dataset = vid.get_trans_loader(batch_size=batch_size, data_num_workers=2, dataset=dataset)
         dataset_ir = vid.get_trans_loader(batch_size=batch_size, data_num_workers=2, dataset=dataset_ir)
 
