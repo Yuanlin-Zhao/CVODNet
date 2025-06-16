@@ -1,6 +1,31 @@
+# CVODNet: Cross-Modal Video Object Detection Network
 
-The TIC module is in the YOLO_CROSS_DARKNET folder. ASL is in the YOLO_CROSS_Trans folder. The cross-modal backbone is in the YOLO_CROSS_backbone folder. DPAFP is under YOLO_PAFPN.
- train: python/exps/CVODNet/cross_detection.py
+This repository implements **CVODNet**, a cross-modal object detection network designed for RGB-Infrared (IR) fusion. The architecture integrates novel modules such as TIC, ASL, and DPAFP to enhance detection performance in complex visual conditions.
+
+## 📁 Project Structure
+
+- **TIC (Thermal-Infrared Compensation)**  
+  Located in `YOLO_CROSS_DARKNET/`  
+  Enhances feature consistency between RGB and IR through spatial compensation and dynamic weighting.
+
+- **ASL (Adaptive Semantic Learning)**  
+  Located in `YOLO_CROSS_Trans/`  
+  Aligns and refines cross-modal features using Mamba-based sequence modeling and cross-branch learning.
+
+- **Cross-Modal Backbone**  
+  Located in `YOLO_CROSS_backbone/`  
+  A dual-stream backbone extracting modality-specific features and enabling early fusion.
+
+- **DPAFP (Dual-Path Attention Feature Pyramid)**  
+  Located in `YOLO_PAFPN/`  
+  Fuses multiscale features via spatial and semantic attention across pyramid levels.
+
+## 🚀 Training
+
+To begin training the cross-modal detector:
+
+```bash
+python python/exps/CVODNet/cross_detection.py
 
 # YOLOV and YOLOV++ for video object detection.
 ## Update
