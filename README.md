@@ -1,4 +1,6 @@
 
+The TIC module is in the YOLO_CROSS_DARKNET folder. ASL is in the YOLO_CROSS_Trans folder. The cross-modal backbone is in the YOLO_CROSS_backbone folder. DPAFP is under YOLO_PAFPN.
+ train: python/exps/CVODNet/cross_detection.py
 
 # YOLOV and YOLOV++ for video object detection.
 ## Update
