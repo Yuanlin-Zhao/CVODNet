@@ -1,5 +1,5 @@
 from torch import nn
-from .network_blocks import BaseConv, ResNetBottleneck
+from network_blocks import BaseConv, ResNetBottleneck
 
 ResNet_cfg = {
     50: [3, 4, 6, 3],

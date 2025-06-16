@@ -233,8 +233,6 @@ class YOLOPAFPN_Swin(nn.Module):
 
 
 from .resnet import ResNet
-
-
 class YOLOPAFPN_ResNet(nn.Module):
     """
     YOLOv3 model. Darknet 53 is the default backbone of this model.

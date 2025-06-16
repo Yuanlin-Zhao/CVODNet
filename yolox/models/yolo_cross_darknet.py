@@ -95,7 +95,89 @@ class Darknet(nn.Module):
 
 from torchvision.transforms import ToPILImage
 
-from yolox.models.yolo_Cross_trans import MutilTransformer
+from yolox.models.yolo_Cross_trans import ASL
+
+class TConv(nn.Module):
+    def __init__(self, in_c, out_c, k, p, ):
+        super().__init__()
+        self.conv = nn.Conv1d(in_c, out_c, kernel_size=k, padding=p,groups=in_c)
+        self.bn = nn.BatchNorm1d(out_c)
+        self.act = nn.SiLU()
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+    def extract_middle_and_edges(x):
+
+        B = x.size(0)
+        assert B >= 8
+
+        # 中间 4 帧
+        mid_start = B // 2 - 2
+        mid4 = x[mid_start:mid_start + 4]
+
+        # 两边 4 帧（前2 + 后2）
+        edge4 = torch.cat([x[:2], x[-2:]], dim=0)
+
+        return mid4, edge4
+
+class TIC(nn.Module):
+    def __init__(self, in_c, out_C):
+        super().__init__()
+
+        self.conv_all1 = TConv(in_c * 8, out_C, k=3, p=1)
+        self.pool_all = nn.AvgPool1d(kernel_size=2, stride=2)
+        self.conv_all2 = TConv(out_C, out_C, k=3, p=1)
+        self.up = nn.Upsample(scale_factor=2, mode='linear', align_corners=True)
+
+        self.conv_part1 = TConv(in_c * 4, out_C, k=3, p=1)
+        self.conv_part2 = TConv(out_C, out_C, k=3, p=1)
+
+        # 可学习权重矩阵，按通道设置，每个 [1, C, 1] 会自动 broadcast
+        self.weight_all = nn.Parameter(torch.ones(1, out_C, 1))   # 用于 all8
+        self.weight_mid = nn.Parameter(torch.ones(1, out_C, 1))   # 用于 mid4
+        self.weight_edge = nn.Parameter(torch.ones(1, out_C, 1))  # 用于 edge4
+
+    def forward(self, x):
+        B, C, H, W = x.size()
+        print(x.size())
+        all = x.reshape(1, B * C, H * W)  # 合并为 [1, B*C, H*W]
+
+        # 中间4帧
+        mid_start = B // 2 - 2
+        mid4 = x[mid_start:mid_start + 4]  # [4, C, H, W]
+        edge4 = torch.cat([x[:2], x[-2:]], dim=0)  # [4, C, H, W]
+        mid4 = mid4.reshape(1, B * C//2, H * W)  # 合并为 [1, B*C, H*W]
+        edge4 = edge4.reshape(1, B * C//2, H * W)  # 合并为 [1, B*C, H*W]
+        # --- all 路径 ---
+        all = self.conv_all1(all)                   # [1, out_C, H*W]
+        all = self.pool_all(all)                    # ↓ 长度减半
+        all = self.conv_all2(all)
+        all = self.up(all)                          # ↑ 恢复原始长度
+        all8 = self.conv_all2(all)                  # [1, out_C, H*W]
+
+        # --- mid4 路径 ---
+        mid4 = self.conv_part1(mid4)
+        mid4 = self.pool_all(mid4)
+        mid4 = self.conv_part2(mid4)
+        mid4 = self.up(mid4)
+        mid4 = self.conv_part2(mid4)
+
+        # --- edge4 路径 ---
+        edge4 = self.conv_part1(edge4)
+        edge4 = self.pool_all(edge4)
+        edge4 = self.conv_part2(edge4)
+        edge4 = self.up(edge4)
+        edge4 = self.conv_part2(edge4)
+
+        w_all = self.weight_all  # [1, C, 1]
+        w_mid = self.weight_mid  # [1, C, 1]
+        w_edge = self.weight_edge  # [1, C, 1]
+
+        out = w_all * all8 * w_mid * mid4 * w_edge * edge4  # 逐通道广播乘法
+        out.reshape(B, C, H, W)
+
+        return out
+
 
 
 class Cross_CSPDarknet(nn.Module):
@@ -221,9 +303,9 @@ class Cross_CSPDarknet(nn.Module):
             ),
         )
 
-        self.cross1 = MutilTransformer(base_channels * 4)
-        self.cross2 = MutilTransformer(base_channels * 8)
-        self.cross3 = MutilTransformer(base_channels * 16)
+        self.cross1 = ASL(base_channels * 4)
+        self.cross2 = ASL(base_channels * 8)
+        self.cross3 = ASL(base_channels * 16)
         self.dark3conv=nn.Conv2d(base_channels * 8, base_channels * 4, kernel_size=3, padding=1)
         self.dark4conv = nn.Conv2d(base_channels * 16, base_channels * 8, kernel_size=3, padding=1)
         self.dark5conv = nn.Conv2d(base_channels * 32, base_channels * 16, kernel_size=3, padding=1)
@@ -269,7 +351,9 @@ class Cross_CSPDarknet(nn.Module):
         outputsdark3 = self.cross1(rgbsdark3, irsdark3)
         outputsdark4 = self.cross2(rgbsdark4, irsdark4)
         outputsdark5 = self.cross3(rgbsdark5, irsdark5)
-
+        outputsdark3=TIC(outputsdark3)
+        outputsdark4=TIC(outputsdark4)
+        outputsdark5=TIC(outputsdark5)
 
         return outputsdark3, outputsdark4, outputsdark5
 
