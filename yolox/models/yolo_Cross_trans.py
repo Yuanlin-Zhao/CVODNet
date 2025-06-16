@@ -42,8 +42,8 @@ class ASL(nn.Module):
         self.drop = DropPath(0.2)
 
         # 新增：两个可学习的标量权重
-        self.weight_rgb = nn.Parameter(torch.tensor(1.0))
-        self.weight_ir = nn.Parameter(torch.tensor(1.0))
+        self.weight_rgb = nn.Parameter(torch.tensor(0.5))
+        self.weight_ir = nn.Parameter(torch.tensor(0.5))
 
     def forward(self, rgb, ir):
         ####### 分支1
